@@ -22,6 +22,7 @@ import {
   validateWhereDocument,
   validateNResults,
   validateMetadata,
+  embeddingsToBase64Bytes,
 } from "./utils";
 import { createClient } from "@hey-api/client-fetch";
 import { ChromaValueError } from "./errors";
@@ -371,12 +372,17 @@ export class CollectionAPIImpl implements CollectionAPI {
 
     await this.prepareRecords({ recordSet });
 
+    let embeddingsBase64: string[] | undefined = undefined;
+    if (recordSet.embeddings) {
+      embeddingsBase64 = embeddingsToBase64Bytes(recordSet.embeddings);
+    }
+
     await Api.collectionAdd({
       client: this.apiClient,
       path: await this.path(),
       body: {
         ids: recordSet.ids,
-        embeddings: recordSet.embeddings,
+        embeddings: embeddingsBase64,
         documents: recordSet.documents,
         metadatas: recordSet.metadatas,
         uris: recordSet.uris,
@@ -510,11 +516,11 @@ export class CollectionAPIImpl implements CollectionAPI {
 
     const { updateConfiguration, updateEmbeddingFunction } = configuration
       ? await processUpdateCollectionConfig({
-          collectionName: data.name,
-          currentConfiguration: data.configuration_json,
-          newConfiguration: configuration,
-          currentEmbeddingFunction: this.embeddingFunction,
-        })
+        collectionName: data.name,
+        currentConfiguration: data.configuration_json,
+        newConfiguration: configuration,
+        currentEmbeddingFunction: this.embeddingFunction,
+      })
       : {};
 
     if (updateEmbeddingFunction) {
@@ -547,9 +553,9 @@ export class CollectionAPIImpl implements CollectionAPI {
       embeddingFunction: this._embeddingFunction
         ? this._embeddingFunction
         : await getEmbeddingFunction(
-            data.name,
-            data.configuration_json.embedding_function ?? undefined,
-          ),
+          data.name,
+          data.configuration_json.embedding_function ?? undefined,
+        ),
       metadata: data.metadata ?? undefined,
       configuration: data.configuration_json,
     });
@@ -578,12 +584,17 @@ export class CollectionAPIImpl implements CollectionAPI {
 
     await this.prepareRecords({ recordSet, update: true });
 
+    let embeddingsBase64: string[] | undefined = undefined;
+    if (recordSet.embeddings) {
+      embeddingsBase64 = embeddingsToBase64Bytes(recordSet.embeddings);
+    }
+
     await Api.collectionUpdate({
       client: this.apiClient,
       path: await this.path(),
       body: {
         ids: recordSet.ids,
-        embeddings: recordSet.embeddings,
+        embeddings: embeddingsBase64,
         metadatas: recordSet.metadatas,
         uris: recordSet.uris,
         documents: recordSet.documents,
@@ -614,12 +625,17 @@ export class CollectionAPIImpl implements CollectionAPI {
 
     await this.prepareRecords({ recordSet, update: true });
 
+    let embeddingsBase64: string[] | undefined = undefined;
+    if (recordSet.embeddings) {
+      embeddingsBase64 = embeddingsToBase64Bytes(recordSet.embeddings);
+    }
+
     await Api.collectionUpsert({
       client: this.apiClient,
       path: await this.path(),
       body: {
         ids: recordSet.ids,
-        embeddings: recordSet.embeddings,
+        embeddings: embeddingsBase64,
         metadatas: recordSet.metadatas,
         uris: recordSet.uris,
         documents: recordSet.documents,
@@ -721,11 +737,11 @@ export class CollectionImpl extends CollectionAPIImpl implements Collection {
 
     const { updateConfiguration, updateEmbeddingFunction } = configuration
       ? await processUpdateCollectionConfig({
-          collectionName: this.name,
-          currentConfiguration: this.configuration,
-          newConfiguration: configuration,
-          currentEmbeddingFunction: this.embeddingFunction,
-        })
+        collectionName: this.name,
+        currentConfiguration: this.configuration,
+        newConfiguration: configuration,
+        currentEmbeddingFunction: this.embeddingFunction,
+      })
       : {};
 
     if (updateEmbeddingFunction) {

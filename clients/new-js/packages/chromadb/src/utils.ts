@@ -11,6 +11,7 @@ import {
 } from "./types";
 import { Include } from "./api";
 import { ChromaValueError } from "./errors";
+import { d } from "@hey-api/openapi-ts/dist/types.d-C5lgdIHG";
 
 /** Default tenant name used when none is specified */
 export const DEFAULT_TENANT = "default_tenant";
@@ -324,8 +325,7 @@ export const validateWhere = (where: Where) => {
 
   if (Object.keys(where).length != 1) {
     throw new ChromaValueError(
-      `Expected 'where' to have exactly one operator, but got ${
-        Object.keys(where).length
+      `Expected 'where' to have exactly one operator, but got ${Object.keys(where).length
       }`,
     );
   }
@@ -529,3 +529,27 @@ export const validateNResults = (nResults: number) => {
     throw new ChromaValueError("Number of requested results has to positive");
   }
 };
+
+function packEmbedding(embedding: number[]): ArrayBuffer {
+  // Create a Float32Array buffer (equivalent to Python's 'f' format)
+  const buffer = new ArrayBuffer(embedding.length * 4); // 4 bytes per float32
+  const view = new Float32Array(buffer);
+
+  // Pack the embedding values into the buffer
+  for (let i = 0; i < embedding.length; i++) {
+    view[i] = embedding[i];
+  }
+
+  return buffer;
+}
+
+export function embeddingsToBase64Bytes(embeddings: number[][]): string[] {
+  return embeddings.map(embedding => {
+    const buffer = packEmbedding(embedding);
+
+    // Convert ArrayBuffer to base64
+    const uint8Array = new Uint8Array(buffer);
+    const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('');
+    return btoa(binaryString);
+  });
+}
